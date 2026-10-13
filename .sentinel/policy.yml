@@ -1,0 +1,29 @@
+version: 1
+autonomy:
+  low:
+    mode: hands-off
+    conditions: [patch_or_minor_bump, proof_test_passes, all_scans_clean]
+  medium:
+    mode: supervised
+    approval: production_only
+  high:
+    mode: assisted
+    approval: every_step
+  rules:
+    - when: {change_type: major}
+      tier: high
+    - when: {paths_match: ["src/payments/**", "target-app/app.py", "target-app/**"]}
+      tier: high
+    - when: {change_type: minor}
+      tier: medium
+guardrails:
+  max_files_changed: 15
+  forbidden_paths: ["infra/prod/**", "secrets/**", ".gitlab/ci/production/**"]
+  max_open_sentinel_mrs: 3
+  kill_switch_label: sentinel-halt
+  max_attempts: 2
+  allow_existing_test_changes: false
+slo:
+  error_rate_max: 0.01
+  p95_latency_regression_max: 0.20
+  canary_minutes: 10

@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sentinel Proof Receipt",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "correlation_id",
+    "idempotency_key",
+    "finding",
+    "autonomy_tier",
+    "proof",
+    "scans",
+    "approvals",
+    "canary",
+    "decision",
+    "signed_off_by",
+    "signature"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "finding": {
+      "type": "object"
+    },
+    "autonomy_tier": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "proof": {
+      "type": "object",
+      "required": [
+        "before_failed",
+        "after_passed",
+        "existing_tests_passed"
+      ],
+      "properties": {
+        "before_failed": {
+          "type": "boolean"
+        },
+        "after_passed": {
+          "type": "boolean"
+        },
+        "existing_tests_passed": {
+          "type": "boolean"
+        },
+        "test_name": {
+          "type": "string"
+        }
+      }
+    },
+    "scans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "scanner",
+          "status",
+          "report_digest"
+        ],
+        "properties": {
+          "scanner": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "report_digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "actor",
+          "stage",
+          "approved",
+          "timestamp"
+        ],
+        "properties": {
+          "actor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stage": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approved": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "canary": {
+      "type": "object",
+      "required": [
+        "observed_minutes",
+        "error_rate",
+        "p95_latency_regression",
+        "promote"
+      ],
+      "properties": {
+        "observed_minutes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "error_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "p95_latency_regression": {
+          "type": "number",
+          "minimum": -1
+        },
+        "promote": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "decision": {
+      "type": "object",
+      "required": [
+        "decision",
+        "reason_code",
+        "inputs_hash"
+      ],
+      "properties": {
+        "decision": {
+          "enum": [
+            "allow",
+            "deny",
+            "needs_human"
+          ]
+        },
+        "reason_code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inputs_hash": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "signed_off_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signature": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

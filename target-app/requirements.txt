@@ -1,0 +1,10 @@
+# CONTROLLED VULNERABILITY LAB ONLY. Do not deploy this image to production.
+fastapi==0.110.0
+uvicorn==0.29.0
+httpx==0.27.0
+requests==2.30.0
+urllib3==1.26.4
+PyYAML==5.3.1
+Jinja2==3.1.2
+cryptography==38.0.4
+python-multipart==0.0.6

@@ -1,0 +1,77 @@
+stages: [prove, fix, attack, ship, receipt]
+
+include:
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+cache:
+  paths:
+    - .cache/pip
+
+prove:policy-and-tests:
+  stage: prove
+  image: python:3.12-slim
+  script:
+    - python -m pip install --disable-pip-version-check -e ".[dev]"
+    - sentinel check-policy
+    - python -m pytest -q tests
+  artifacts:
+    when: always
+    paths: [.sentinel/audit.jsonl]
+
+prove:target-app-tests:
+  stage: prove
+  image: python:3.8-slim
+  script:
+    - python -m pip install --disable-pip-version-check "pip<25"
+    - python -m pip install --disable-pip-version-check -r target-app/requirements.txt
+    - python -m pip install --disable-pip-version-check "pytest>=8,<8.4"
+    - PYTHONPATH=target-app python -m pytest -q target-app/test_app.py
+
+fix:adapter-contract:
+  stage: fix
+  image: python:3.12-slim
+  script:
+    - python -c "from pathlib import Path; assert Path('src/sentinel/gitlab_client.py').is_file()"
+    - python -c "import json; print(json.dumps({'verb':'fix','decision':'needs_human','reason_code':'AGENT_PATCH_MUST_BE_PROVIDED_BY_VERIFIED_PLATFORM_ADAPTER'}))"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+attack:security-evidence:
+  stage: attack
+  image: python:3.12-slim
+  script:
+    - python -m pip install --disable-pip-version-check -e ".[dev]"
+    - python -m pytest -q tests
+    - python -c "import json; print(json.dumps({'verb':'attack','decision':'needs_human','reason_code':'REVIEW_AND_NATIVE_SCAN_ARTIFACT_VALIDATION_REQUIRED'}))"
+  needs: [prove:policy-and-tests]
+
+ship:canary-gate:
+  stage: ship
+  image: python:3.12-slim
+  script:
+    - test -s receipt/receipt.json || (echo '{"verb":"ship","decision":"deny","reason_code":"RECEIPT_MISSING"}' && exit 1)
+    - test -n "$SENTINEL_RECEIPT_KEY" || (echo '{"verb":"ship","decision":"deny","reason_code":"RECEIPT_KEY_MISSING"}' && exit 1)
+    - python -m pip install --disable-pip-version-check -e ".[dev]"
+    - sentinel verify-receipt --receipt receipt/receipt.json --key-env SENTINEL_RECEIPT_KEY
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  allow_failure: false
+
+receipt:proof-receipt:
+  stage: receipt
+  image: python:3.12-slim
+  script:
+    - test -s receipt/receipt.json || (echo '{"verb":"receipt","decision":"deny","reason_code":"RECEIPT_NOT_GENERATED_BY_VERIFIED_ORCHESTRATOR"}' && exit 1)
+    - test -s receipt/receipt.md
+    - test -s receipt/receipt.html
+  when: always
+  artifacts:
+    when: always
+    paths: [receipt/receipt.json, receipt/receipt.md, receipt/receipt.html]

@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sentinel policy",
+  "type": "object",
+  "required": [
+    "version",
+    "autonomy",
+    "guardrails",
+    "slo"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "autonomy": {
+      "type": "object",
+      "required": [
+        "low",
+        "medium",
+        "high",
+        "rules"
+      ],
+      "properties": {
+        "low": {
+          "type": "object"
+        },
+        "medium": {
+          "type": "object"
+        },
+        "high": {
+          "type": "object"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "when",
+              "tier"
+            ],
+            "properties": {
+              "when": {
+                "type": "object"
+              },
+              "tier": {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "guardrails": {
+      "type": "object",
+      "required": [
+        "max_files_changed",
+        "forbidden_paths",
+        "max_open_sentinel_mrs",
+        "kill_switch_label",
+        "max_attempts",
+        "allow_existing_test_changes"
+      ],
+      "properties": {
+        "max_files_changed": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "forbidden_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "max_open_sentinel_mrs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "kill_switch_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        },
+        "allow_existing_test_changes": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "slo": {
+      "type": "object",
+      "required": [
+        "error_rate_max",
+        "p95_latency_regression_max",
+        "canary_minutes"
+      ],
+      "properties": {
+        "error_rate_max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "p95_latency_regression_max": {
+          "type": "number",
+          "minimum": 0
+        },
+        "canary_minutes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

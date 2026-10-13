@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+.cache/
+.sentinel/audit.jsonl
+receipt/
+.env
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Secrets and private keys
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
